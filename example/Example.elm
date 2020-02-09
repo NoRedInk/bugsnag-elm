@@ -74,8 +74,9 @@ update msg model =
 
 
 info : String -> Cmd Msg
-info message =
-    Task.attempt (\_ -> NoOp) (bugsnagClient.info message Dict.empty)
+info errorMessage =
+    bugsnagClient.info errorMessage Dict.empty
+        |> Cmd.map (\_ -> NoOp)
 
 
 json : Json.Encode.Value
