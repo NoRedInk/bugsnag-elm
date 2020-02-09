@@ -1,6 +1,6 @@
 module Bugsnag exposing
     ( BugsnagClient, BugsnagConfig, User, Severity(..)
-    , scoped, send
+    , bugsnagClient, notify
     )
 
 {-| Send error reports to bugsnag.
@@ -13,7 +13,7 @@ module Bugsnag exposing
 
 ## Types
 
-@docs scoped, send
+@docs bugsnagClient, notify
 
 -}
 
@@ -26,7 +26,7 @@ import Json.Encode as Encode exposing (Value)
 {-| Functions preapplied with access tokens, scopes, and environments,
 separated by [`Severity`](#Severity).
 
-Create one using [`scoped`](#scoped).
+Create one using [`bugsnagClient`](#bugsnagClient).
 
 -}
 type alias BugsnagClient =
@@ -38,7 +38,7 @@ type alias BugsnagClient =
 
 {-| Basic data needed to define the local client for a Bugsnag instance.
 Applies to all error reports that may occur on the page,
-with error-specific data added later in `send`
+with error-specific data added later in `notify`
 
   - `token` - The [Bugsnag API token](https://Bugsnag.com/docs/api/#authentication) required to authenticate the request.
   - codeVersion -
@@ -79,7 +79,7 @@ type Msg
     = GotBugsnagResponse
 
 
-{-| Send a message to Bugsnag. [`scoped`](#scoped)
+{-| Send a message to Bugsnag. [`bugsnagClient`](#bugsnagClient)
 provides a nice wrapper around this.
 
 Arguments:
@@ -96,8 +96,8 @@ with the [`Http.Error`](http://package.elm-lang.org/packages/elm-lang/http/lates
 responsible.
 
 -}
-send : BugsnagConfig -> Severity -> String -> Dict String Value -> Cmd Msg
-send bugsnagConfig severity message metaData =
+notify : BugsnagConfig -> Severity -> String -> Dict String Value -> Cmd Msg
+notify bugsnagConfig severity message metaData =
     let
         body : Http.Body
         body =
@@ -209,7 +209,7 @@ toJsonBody bugsnagConfig severity message metaData =
 {-| Return a [`Bugsnag`](#Bugsnag) record configured with the given
 [`Environment`](#Environment) and [`Scope`](#Scope) string.
 
-    Bugsnag = Bugsnag.scoped "Page/Home.elm"
+    Bugsnag = Bugsnag.bugsnagClient "Page/Home.elm"
 
     Bugsnag.debug "Hitting the hats API." Dict.empty
 
@@ -218,11 +218,11 @@ toJsonBody bugsnagConfig severity message metaData =
         |> Bugsnag.error "Unexpected payload from the hats API."
 
 -}
-scoped : BugsnagConfig -> BugsnagClient
-scoped bugsnagConfig =
-    { error = send bugsnagConfig Error
-    , warning = send bugsnagConfig Warning
-    , info = send bugsnagConfig Info
+bugsnagClient : BugsnagConfig -> BugsnagClient
+bugsnagClient bugsnagConfig =
+    { error = notify bugsnagConfig Error
+    , warning = notify bugsnagConfig Warning
+    , info = notify bugsnagConfig Info
     }
 
 
