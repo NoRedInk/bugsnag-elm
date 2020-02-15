@@ -25,7 +25,7 @@ bugsnagClient =
         { token = token
         , codeVersion = "24dcf3a9a9cf1a5e2ea319018644a68f4743a731"
         , context = "Example"
-        , environment = "test"
+        , releaseStage = "test"
         , user =
             Just
                 { id = "42"
@@ -81,7 +81,7 @@ notifyBugsnag errorMessage =
 
 json : Json.Encode.Value
 json =
-    Json.Encode.object [ ( "environment", Json.Encode.string "test" ) ]
+    Json.Encode.object [ ( "releaseStage", Json.Encode.string "test" ) ]
 
 
 

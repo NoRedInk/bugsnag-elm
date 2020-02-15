@@ -23,7 +23,7 @@ import Http
 import Json.Encode as Encode exposing (Value)
 
 
-{-| Functions preapplied with access tokens, scopes, and environments,
+{-| Functions preapplied with access tokens, scopes, and releaseStages,
 separated by [`Severity`](#Severity).
 
 Create one using [`bugsnagClient`](#bugsnagClient).
@@ -43,7 +43,7 @@ with error-specific data added later in `notify`
   - `token` - The [Bugsnag API token](https://Bugsnag.com/docs/api/#authentication) required to authenticate the request.
   - codeVersion -
   - `context` - Scoping messages essentially namespaces them. For example, this might be the name of the page the user was on when the message was sent.
-  - `environment` - usually `"production"`, `"development"`, `"staging"`, etc., but bugsnag accepts any value
+  - `releaseStage` - usually `"production"`, `"development"`, `"staging"`, etc., but bugsnag accepts any value
   - 'user' - if available, report default user data (id, name, email)
 
 -}
@@ -51,8 +51,9 @@ type alias BugsnagConfig =
     { token : String
     , codeVersion : String
     , context : String
-    , environment : String
+    , releaseStage : String
     , user : Maybe User
+    ,
     }
 
 
@@ -192,7 +193,7 @@ toJsonBody bugsnagConfig severity message metaData =
                  , ( "app"
                    , Encode.object
                         [ ( "version", Encode.string bugsnagConfig.codeVersion )
-                        , ( "releaseStage", Encode.string bugsnagConfig.environment )
+                        , ( "releaseStage", Encode.string bugsnagConfig.releaseStage )
                         , ( "type", Encode.string "elm" )
                         ]
                    )
