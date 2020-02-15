@@ -44,6 +44,7 @@ with error-specific data added later in `notify`
   - codeVersion -
   - `context` - Scoping messages essentially namespaces them. For example, this might be the name of the page the user was on when the message was sent.
   - `releaseStage` - usually `"production"`, `"development"`, `"staging"`, etc., but bugsnag accepts any value
+  - `notifyReleaseStages` - explictly define which stages you want to report, omitting any you'd prefer to simply log in console (e.g. "dev"). Empty list will report ALL error stages.
   - 'user' - if available, report default user data (id, name, email)
 
 -}
@@ -52,8 +53,8 @@ type alias BugsnagConfig =
     , codeVersion : String
     , context : String
     , releaseStage : String
+    , notifyReleaseStages : List String
     , user : Maybe User
-    ,
     }
 
 
@@ -103,19 +104,34 @@ notify bugsnagConfig severity message metaData =
         body : Http.Body
         body =
             toJsonBody bugsnagConfig severity message metaData
+
+        shouldSend =
+            List.isEmpty bugsnagConfig.notifyReleaseStages
+                || List.member bugsnagConfig.releaseStage bugsnagConfig.notifyReleaseStages
     in
-    { method = "POST"
-    , headers =
-        [ Http.header "Bugsnag-Api-Key" bugsnagConfig.token
-        , Http.header "Bugsnag-Payload-Version" "5"
-        ]
-    , url = endpointUrl
-    , body = body
-    , expect = Http.expectWhatever (\_ -> GotBugsnagResponse)
-    , timeout = Nothing
-    , tracker = Nothing
-    }
-        |> Http.request
+    case shouldSend of
+        True ->
+            { method = "POST"
+            , headers =
+                [ Http.header "Bugsnag-Api-Key" bugsnagConfig.token
+                , Http.header "Bugsnag-Payload-Version" "5"
+                ]
+            , url = endpointUrl
+            , body = body
+            , expect = Http.expectWhatever (\_ -> GotBugsnagResponse)
+            , timeout = Nothing
+            , tracker = Nothing
+            }
+                |> Http.request
+
+        False ->
+            let
+                _ =
+                    Debug.log
+                        "Bugsnag error message not sent due to releaseStage/notifyReleaseStages configuration"
+                        message
+            in
+            Cmd.none
 
 
 
