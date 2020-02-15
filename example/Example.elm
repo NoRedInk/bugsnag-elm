@@ -18,8 +18,10 @@ token =
     -- https://app.bugsnag.com
     "12345abcde........"
 
-
-bugsnagClient : BugsnagClient
+{-| Bugsnag will take any model type and convert it via `Debug.toString` to report as metaData.
+You can pass any other value if you do not wish to report your model to the api
+-}
+bugsnagClient : BugsnagClient Model
 bugsnagClient =
     Bugsnag.bugsnagClient
         { token = token
@@ -71,12 +73,12 @@ update msg model =
             ( { model | errorMessage = text }, Cmd.none )
 
         Send ->
-            ( model, notifyBugsnag model.errorMessage )
+            ( model, notifyBugsnag model.errorMessage model )
 
 
-notifyBugsnag : String -> Cmd Msg
-notifyBugsnag errorMessage =
-    bugsnagClient.info errorMessage Dict.empty
+notifyBugsnag : String -> Model -> Cmd Msg
+notifyBugsnag errorMessage model =
+    bugsnagClient.info errorMessage Dict.empty model
         |> Cmd.map (\_ -> NoOp)
 
 

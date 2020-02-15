@@ -29,10 +29,10 @@ separated by [`Severity`](#Severity).
 Create one using [`bugsnagClient`](#bugsnagClient).
 
 -}
-type alias BugsnagClient =
-    { error : String -> Dict String Value -> Cmd Msg
-    , warning : String -> Dict String Value -> Cmd Msg
-    , info : String -> Dict String Value -> Cmd Msg
+type alias BugsnagClient model =
+    { error : String -> Dict String Value -> model -> Cmd Msg
+    , warning : String -> Dict String Value -> model -> Cmd Msg
+    , info : String -> Dict String Value -> model -> Cmd Msg
     }
 
 
@@ -90,6 +90,7 @@ Arguments:
   - `Severity` - severity, e.g. `Error`, `Warning`, `Debug`
   - `String` - message, e.g. "Auth server was down when user tried to sign in."
   - `Dict String Value` - arbitrary metaData, e.g. \`{"accountType": "premium"}
+  - 'a' - any Model which will only be manipulated by \`Debug.toString' to reprot as metaData
 
 If the message was successfully sent to Bugsnag
 
@@ -98,12 +99,12 @@ with the [`Http.Error`](http://package.elm-lang.org/packages/elm-lang/http/lates
 responsible.
 
 -}
-notify : BugsnagConfig -> Severity -> String -> Dict String Value -> Cmd Msg
-notify bugsnagConfig severity message metaData =
+notify : BugsnagConfig -> Severity -> String -> Dict String Value -> a -> Cmd Msg
+notify bugsnagConfig severity message metaData model =
     let
         body : Http.Body
         body =
-            toJsonBody bugsnagConfig severity message metaData
+            toJsonBody bugsnagConfig severity message metaData model
 
         shouldSend =
             List.isEmpty bugsnagConfig.notifyReleaseStages
@@ -161,9 +162,16 @@ toJsonBody :
     -> Severity
     -> String
     -> Dict String Value
+    -> a
     -> Http.Body
-toJsonBody bugsnagConfig severity message metaData =
+toJsonBody bugsnagConfig severity message metaData model =
     let
+        modelString =
+            Debug.toString model
+
+        metaDataWithModel =
+            Dict.insert "model" (Encode.string modelString) metaData
+
         userInfo =
             case bugsnagConfig.user of
                 Just user ->
@@ -203,7 +211,7 @@ toJsonBody bugsnagConfig severity message metaData =
                  , ( "context", Encode.string bugsnagConfig.context )
                  , ( "severity", Encode.string (severityToString severity) )
                  , ( "metaData"
-                   , metaData
+                   , metaDataWithModel
                         |> Encode.dict identity identity
                    )
                  , ( "app"
@@ -235,7 +243,7 @@ toJsonBody bugsnagConfig severity message metaData =
         |> Bugsnag.error "Unexpected payload from the hats API."
 
 -}
-bugsnagClient : BugsnagConfig -> BugsnagClient
+bugsnagClient : BugsnagConfig -> BugsnagClient model
 bugsnagClient bugsnagConfig =
     { error = notify bugsnagConfig Error
     , warning = notify bugsnagConfig Warning
