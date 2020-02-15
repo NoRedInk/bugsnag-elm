@@ -8,7 +8,7 @@ module Bugsnag exposing
 
 ## Types
 
-@docs Bugsnag, Severity
+@docs BugsnagClient, BugsnagConfig, User, Severity
 
 
 ## Types

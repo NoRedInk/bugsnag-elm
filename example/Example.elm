@@ -40,13 +40,13 @@ bugsnagClient =
 
 
 type alias Model =
-    { report : String
+    { errorMessage : String
     }
 
 
 initialModel : Model
 initialModel =
-    { report = ""
+    { errorMessage = ""
     }
 
 
@@ -67,10 +67,10 @@ update msg model =
             ( model, Cmd.none )
 
         SetText text ->
-            ( { model | report = text }, Cmd.none )
+            ( { model | errorMessage = text }, Cmd.none )
 
         Send ->
-            ( model, notifyBugsnag model.report )
+            ( model, notifyBugsnag model.errorMessage )
 
 
 notifyBugsnag : String -> Cmd Msg
@@ -91,7 +91,7 @@ json =
 view : Model -> Html Msg
 view model =
     div []
-        [ input [ onInput SetText, value model.report ] []
+        [ input [ onInput SetText, value model.errorMessage ] []
         , button [ onClick Send ] [ text "Send to bugsnag" ]
         ]
 
