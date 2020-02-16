@@ -80,11 +80,6 @@ notifyBugsnag errorMessage =
         |> Cmd.map (\_ -> NoOp)
 
 
-json : Json.Encode.Value
-json =
-    Json.Encode.object [ ( "releaseStage", Json.Encode.string "test" ) ]
-
-
 
 -- VIEW --
 
