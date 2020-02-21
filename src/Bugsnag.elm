@@ -125,12 +125,14 @@ notify bugsnagConfig severity message metaData =
                 |> Http.request
 
         False ->
-            let
-                _ =
-                    Debug.log
-                        "Bugsnag error message not sent due to releaseStage/notifyReleaseStages configuration"
-                        message
-            in
+            -- Uncomment if you would like to see errors log in the console
+            -- for stages that won't actually report to bugsnag.
+            -- let
+            --     _ =
+            --         Debug.log
+            --             "Bugsnag error message not sent due to releaseStage/notifyReleaseStages configuration"
+            --             message
+            -- in
             Cmd.none
 
 
