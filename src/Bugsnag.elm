@@ -21,6 +21,7 @@ import Bugsnag.Internal
 import Dict exposing (Dict)
 import Http
 import Json.Encode as Encode exposing (Value)
+import Task exposing (Task)
 
 
 {-| Functions preapplied with access tokens, scopes, and releaseStages,
@@ -30,9 +31,9 @@ Create one using [`bugsnagClient`](#bugsnagClient).
 
 -}
 type alias BugsnagClient =
-    { error : String -> Dict String Value -> Cmd Msg
-    , warning : String -> Dict String Value -> Cmd Msg
-    , info : String -> Dict String Value -> Cmd Msg
+    { error : String -> Dict String Value -> Task Http.Error ()
+    , warning : String -> Dict String Value -> Task Http.Error ()
+    , info : String -> Dict String Value -> Task Http.Error ()
     }
 
 
@@ -77,10 +78,6 @@ type alias User =
     }
 
 
-type Msg
-    = GotBugsnagResponse
-
-
 {-| Send a message to Bugsnag. [`bugsnagClient`](#bugsnagClient)
 provides a nice wrapper around this.
 
@@ -98,7 +95,7 @@ with the [`Http.Error`](http://package.elm-lang.org/packages/elm-lang/http/lates
 responsible.
 
 -}
-notify : BugsnagConfig -> Severity -> String -> Dict String Value -> Cmd Msg
+notify : BugsnagConfig -> Severity -> String -> Dict String Value -> Task Http.Error ()
 notify bugsnagConfig severity message metaData =
     let
         body : Http.Body
@@ -118,11 +115,10 @@ notify bugsnagConfig severity message metaData =
                 ]
             , url = endpointUrl
             , body = body
-            , expect = Http.expectWhatever (\_ -> GotBugsnagResponse)
+            , resolver = Http.stringResolver resolveNotify
             , timeout = Nothing
-            , tracker = Nothing
             }
-                |> Http.request
+                |> Http.task
 
         False ->
             -- Uncomment if you would like to see errors log in the console
@@ -133,11 +129,30 @@ notify bugsnagConfig severity message metaData =
             --             "Bugsnag error message not sent due to releaseStage/notifyReleaseStages configuration"
             --             message
             -- in
-            Cmd.none
+            Task.succeed ()
 
 
 
 -- INTERNAL --
+
+
+resolveNotify : Http.Response String -> Result Http.Error ()
+resolveNotify response =
+    case response of
+        Http.BadUrl_ url ->
+            Err (Http.BadUrl url)
+
+        Http.Timeout_ ->
+            Err Http.Timeout
+
+        Http.NetworkError_ ->
+            Err Http.NetworkError
+
+        Http.BadStatus_ metadata body ->
+            Err (Http.BadStatus metadata.statusCode)
+
+        Http.GoodStatus_ _ _ ->
+            Ok ()
 
 
 severityToString : Severity -> String

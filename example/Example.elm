@@ -77,7 +77,7 @@ update msg model =
 notifyBugsnag : String -> Cmd Msg
 notifyBugsnag errorMessage =
     bugsnagClient.info errorMessage Dict.empty
-        |> Cmd.map (\_ -> NoOp)
+        |> Task.attempt (\_ -> NoOp)
 
 
 
