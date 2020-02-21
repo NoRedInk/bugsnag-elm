@@ -21,7 +21,7 @@ token =
 
 bugsnagClient : BugsnagClient
 bugsnagClient =
-    Bugsnag.scoped
+    Bugsnag.bugsnagClient
         { token = token
         , codeVersion = "24dcf3a9a9cf1a5e2ea319018644a68f4743a731"
         , context = "Example"
@@ -70,12 +70,13 @@ update msg model =
             ( { model | errorMessage = text }, Cmd.none )
 
         Send ->
-            ( model, info model.errorMessage )
+            ( model, notifyBugsnag model.errorMessage )
 
 
-info : String -> Cmd Msg
-info message =
-    Task.attempt (\_ -> NoOp) (bugsnagClient.info message Dict.empty)
+notifyBugsnag : String -> Cmd Msg
+notifyBugsnag errorMessage =
+    bugsnagClient.info errorMessage Dict.empty
+        |> Task.attempt (\_ -> NoOp)
 
 
 json : Json.Encode.Value
